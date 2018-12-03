@@ -1,64 +1,41 @@
-use std::collections::HashMap;
-
 fn main() {
-    println!("Hello, world!");
+    let input = include_str!("../input.txt");
+
+    println!("{:?}", process(input));
 }
 
-fn process(input: String) -> String {
-    let bitmasks: HashMap<&str, usize> = input.lines().zip(input.lines())
+fn process(input: &str) -> Option<String> {
+    let lines: Vec<&str> = input.lines().collect();
 
-    // println!("line={}; bitmask={}", line, bitmask);
+    for line_a in &lines {
+        for line_b in &lines {
+            let (diff_count, matching) = char_diff(line_a, line_b);
 
-    println!("bitmasks={:?}", bitmasks);
-
-    // let diffs = HashMap::new();
-
-    for line_a in {
-        for line_b in &bitmasks {
-            let diff = usize_diff(bitmask_a, bitmask_b);
-
-            // let key_a = (line_a, line_b);
-            // let key_b = (line_b, line_a);
-            // diffs.entry(key)
-
-            println!("lines=[{} {}] bits=[{:#b}, {:#b}] diff={}", line_a, line_b, bitmask_a, bitmask_b, diff);
+            if diff_count == 1 {
+                return Some(matching)
+            }
         }
     }
 
-    "".to_string()
+    None
 }
 
-fn char_diff(a: String, b: String) -> usize {
-    
-}
+fn char_diff<'a, 'b>(left: &'a str, right: &'a str) -> (usize, String) {
+    let zipped = left.chars().zip(right.chars());
 
-fn usize_diff(a: &usize, b: &usize) -> usize {
-    if a > b {
-        a - b
-    }
-    else {
-        b - a
-    }
-}
+    let mut diff_count = 0;
+    let mut matching = String::new();
 
-fn compute_bitmask(input: &str) -> usize {
-    let keys: Vec<char> = "abcdefghijklmnopqrstuvwxyz".chars().collect();
-
-    let mut bitmask = 0;
-
-    for char in input.chars() {
-        let pos = keys.iter().position(|c| c == &char).expect("unable to find input char");
-        println!("char={}; pos={}", char, pos);
-
-        let bit = 1 << pos;
-        if bitmask & bit > 0 {
-            panic!("bit already set");
+    for (l, r) in zipped {
+        if l == r {
+            matching.push(l);
         }
-
-        bitmask += bit;
+        else {
+            diff_count += 1;
+        }
     }
 
-    bitmask
+    (diff_count, matching)
 }
 
 mod tests {
@@ -68,19 +45,13 @@ mod tests {
     fn simple() {
         let input = include_str!("fixtures/simple.txt");
 
-        assert_eq!(process(input.to_string()), "fgij");
-    }
-
-    #[test]
-    fn bitmask() {
-        assert_eq!(compute_bitmask("abc"), 0b111);
-        assert_eq!(compute_bitmask("ac"), 0b101);
+        assert_eq!(process(input), Some("fgij".to_string()));
     }
 
     #[test]
     fn char_diffs() {
-        assert_eq!(char_diff("ab", "ab"), 0);
-        assert_eq!(char_diff("ab", "ac"), 1);
-        assert_eq!(char_diff("ab", "bc"), 1);
+        assert_eq!(char_diff("ab", "ab"), (0, "ab".to_string()));
+        assert_eq!(char_diff("ab", "ac"), (1, "a".to_string()));
+        assert_eq!(char_diff("ab", "bc"), (2, "".to_string()));
     }
 }
