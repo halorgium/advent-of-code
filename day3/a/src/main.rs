@@ -6,6 +6,7 @@ fn main() {
     let input = include_str!("../input.txt");
 
     println!("{}", calculate_overlap(input));
+    println!("{:?}", find_valid_claim(input));
 }
 
 #[derive(Debug, PartialEq)]
@@ -34,7 +35,43 @@ impl Claim {
 }
 
 fn calculate_overlap(input: &str) -> usize {
-    let claims: Vec<Claim> = input.lines().map(|line| parse_line(&line)).collect();
+    let claims = build_claims(input);
+    let fabric = build_fabric(&claims);
+    // println!("fabric={:?}", fabric);
+
+    let count = fabric.values().filter(|v| *v > &1).count();
+
+    count
+}
+
+fn find_valid_claim(input: &str) -> Option<u32> {
+    let claims = build_claims(input);
+    let fabric = build_fabric(&claims);
+
+    for claim in claims {
+        let mut overlapped = false;
+        for point in claim.covered_points() {
+            match fabric.get(&point) {
+                Some(1) => (),
+                Some(0) => panic!("impossible"),
+                Some(_) => overlapped = true,
+                None => panic!("impossible"),
+            }
+        }
+
+        if !overlapped {
+            return Some(claim.id)
+        }
+    }
+
+    None
+}
+
+fn build_claims(input: &str) -> Vec<Claim> {
+    input.lines().map(|line| parse_line(&line)).collect()
+}
+
+fn build_fabric(claims: &Vec<Claim>) -> HashMap<(u32, u32), u32> {
     // println!("claims={:?}", claims);
 
     let mut fabric: HashMap<(u32, u32), u32> = HashMap::new();
@@ -50,11 +87,7 @@ fn calculate_overlap(input: &str) -> usize {
         }
     }
 
-    // println!("fabric={:?}", fabric);
-
-    let count = fabric.values().filter(|v| *v > &1).count();
-
-    count
+    fabric
 }
 
 fn parse_line(content: &str) -> Claim {
@@ -81,6 +114,13 @@ mod tests {
         let input = include_str!("fixtures/simple.txt");
 
         assert_eq!(calculate_overlap(input), 4);
+    }
+
+    #[test]
+    fn no_overlap() {
+        let input = include_str!("fixtures/simple.txt");
+
+        assert_eq!(find_valid_claim(input), Some(3));
     }
 
     #[test]
